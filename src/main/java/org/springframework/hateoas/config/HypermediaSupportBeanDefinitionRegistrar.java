@@ -58,6 +58,7 @@ import org.springframework.hateoas.hal.Jackson2HalModule;
 import org.springframework.hateoas.hal.forms.HalFormsLinkDiscoverer;
 import org.springframework.hateoas.hal.forms.Jackson2HalFormsModule;
 import org.springframework.hateoas.mvc.TypeConstrainedMappingJackson2HttpMessageConverter;
+import org.springframework.hateoas.uber.UberLinkDiscoverer;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.Jackson2ObjectMapperFactoryBean;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -68,8 +69,10 @@ import org.springframework.util.ClassUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 /**
  * {@link ImportBeanDefinitionRegistrar} implementation to activate hypermedia support based on the configured
@@ -85,6 +88,7 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 	private static final String LINK_DISCOVERER_REGISTRY_BEAN_NAME = "_linkDiscovererRegistry";
 	private static final String HAL_OBJECT_MAPPER_BEAN_NAME = "_halObjectMapper";
 	private static final String HAL_FORMS_OBJECT_MAPPER_BEAN_NAME = "_halFormsObjectMapper";
+	private static final String UBER_OBJECT_MAPPER_BEAN_NAME = "_uberObjectMapper";
 	private static final String MESSAGE_SOURCE_BEAN_NAME = "linkRelationMessageSource";
 
 	private static final boolean JACKSON2_PRESENT = ClassUtils.isPresent("com.fasterxml.jackson.databind.ObjectMapper",
@@ -125,6 +129,10 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 
 		if (types.contains(HypermediaType.HAL_FORMS)) {
 			registerHypermediaComponents(metadata, registry, HAL_FORMS_OBJECT_MAPPER_BEAN_NAME);
+		}
+
+		if (types.contains(HypermediaType.UBER)) {
+			registerHypermediaComponents(metadata, registry, UBER_OBJECT_MAPPER_BEAN_NAME);
 		}
 
 		if (!types.isEmpty()) {
@@ -205,6 +213,9 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 				break;
 			case HAL_FORMS:
 				definition = new RootBeanDefinition(HalFormsLinkDiscoverer.class);
+				break;
+			case UBER:
+				definition = new RootBeanDefinition(UberLinkDiscoverer.class);
 				break;
 			default:
 				return null;
@@ -337,7 +348,25 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 				halFormsConverter.setObjectMapper(halFormsObjectMapper);
 				result.add(halFormsConverter);
 			}
-			
+
+			if (beanFactory.containsBean(UBER_OBJECT_MAPPER_BEAN_NAME)) {
+
+				ObjectMapper uberObjectMapper = beanFactory.getBean(UBER_OBJECT_MAPPER_BEAN_NAME, ObjectMapper.class);
+				MessageSourceAccessor linkRelationMessageSource = beanFactory.getBean(MESSAGE_SOURCE_BEAN_NAME,
+					MessageSourceAccessor.class);
+
+				uberObjectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+				uberObjectMapper.enable(DeserializationFeature.UNWRAP_ROOT_VALUE);
+				uberObjectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+				uberObjectMapper.enable(SerializationFeature.WRAP_ROOT_VALUE);
+
+				MappingJackson2HttpMessageConverter uberConverter = new TypeConstrainedMappingJackson2HttpMessageConverter(
+					ResourceSupport.class);
+				uberConverter.setSupportedMediaTypes(Arrays.asList(UBER_JSON));
+				uberConverter.setObjectMapper(uberObjectMapper);
+				result.add(uberConverter);
+			}
+
 			result.addAll(converters);
 			return result;
 		}
@@ -368,7 +397,7 @@ class HypermediaSupportBeanDefinitionRegistrar implements ImportBeanDefinitionRe
 		@Override
 		public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 
-			if (HAL_OBJECT_MAPPER_BEAN_NAME.equals(beanName) || HAL_FORMS_OBJECT_MAPPER_BEAN_NAME.equals(beanName)) {
+			if (HAL_OBJECT_MAPPER_BEAN_NAME.equals(beanName) || HAL_FORMS_OBJECT_MAPPER_BEAN_NAME.equals(beanName) || UBER_OBJECT_MAPPER_BEAN_NAME.equals(beanName)) {
 				ObjectMapper mapper = (ObjectMapper) bean;
 				mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 				return mapper;

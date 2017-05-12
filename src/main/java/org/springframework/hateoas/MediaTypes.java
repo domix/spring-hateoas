@@ -44,4 +44,17 @@ public class MediaTypes {
 
 	public static final MediaType HAL_FORMS_JSON = MediaType.parseMediaType(HAL_FORMS_JSON_VALUE);
 
+	/**
+	 * Public constant media type for {@code application/vnd.amundsen-uber+json}.
+	 */
+	public static final String UBER_JSON_VALUE = "application/vnd.amundsen-uber+json";
+
+	public static final MediaType UBER_JSON = MediaType.parseMediaType(UBER_JSON_VALUE);
+
+	/**
+	 * Public constant media type for {@code application/vnd.siren+json}.
+	 */
+	public static final String SIREN_JSON_VALUE = "application/vnd.siren+json";
+
+	public static final MediaType SIREN_JSON = MediaType.parseMediaType(SIREN_JSON_VALUE);
 }

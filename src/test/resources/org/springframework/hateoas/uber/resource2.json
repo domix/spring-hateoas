@@ -1,0 +1,12 @@
+{
+  "uber" : {
+    "version" : "1.0",
+    "data" : [ {
+      "rel" : [ "custom" ],
+      "url" : "localhost"
+    }, {
+      "label" : "org.springframework.hateoas.Resource.content",
+      "value" : "second"
+    } ]
+  }
+}

@@ -36,6 +36,9 @@ import org.springframework.hateoas.EntityLinks;
 import org.springframework.hateoas.LinkDiscoverer;
 import org.springframework.hateoas.config.EnableHypermediaSupport.HypermediaConfigurationImportSelector;
 import org.springframework.hateoas.hal.forms.HalFormsConfiguration;
+import org.springframework.hateoas.siren.SirenConfiguration;
+import org.springframework.hateoas.uber.UberConfiguration;
+import org.springframework.hateoas.xhtml.XHtmlConfiguration;
 
 /**
  * Activates hypermedia support in the {@link ApplicationContext}. Will register infrastructure beans available for
@@ -80,7 +83,13 @@ public @interface EnableHypermediaSupport {
 		 */
 		HAL,
 
-		HAL_FORMS(HalFormsConfiguration.class.getName());
+		HAL_FORMS(HalFormsConfiguration.class.getName()),
+
+		SIREN(SirenConfiguration.class.getName()),
+
+		UBER(UberConfiguration.class.getName()),
+
+		XHTML(XHtmlConfiguration.class.getName());
 
 		private List<String> configurations;
 
