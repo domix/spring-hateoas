@@ -15,7 +15,7 @@
  */
 package org.springframework.hateoas.uber;
 
-import static org.springframework.hateoas.JacksonHelper.findParentType;
+import static org.springframework.hateoas.JacksonHelper.*;
 import static org.springframework.hateoas.uber.NewUberDocument.*;
 
 import java.io.IOException;
@@ -81,7 +81,7 @@ public class Jackson2UberModule extends SimpleModule {
 
 			UberDocumentWrapper uber = new UberDocumentWrapper(uberDocument()
 				.version("1.0")
-				.data(UberUtils.toUberData(value).getData())
+				.data(UberData.toUberData(value).getData())
 				.build());
 
 			provider
@@ -181,7 +181,7 @@ public class Jackson2UberModule extends SimpleModule {
 
 			UberDocumentWrapper uber = new UberDocumentWrapper(uberDocument()
 				.version("1.0")
-				.data(UberUtils.toUberData(value).getData())
+				.data(UberData.toUberData(value).getData())
 				.build());
 
 			provider
@@ -281,7 +281,7 @@ public class Jackson2UberModule extends SimpleModule {
 
 			UberDocumentWrapper uber = new UberDocumentWrapper(uberDocument()
 				.version("1.0")
-				.data(UberUtils.toUberData(value).getData())
+				.data(UberData.toUberData(value).getData())
 				.build());
 
 			provider
@@ -715,47 +715,56 @@ public class Jackson2UberModule extends SimpleModule {
 		public Resources<?> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
 
 			UberDocumentWrapper uber = p.getCodec().readValue(p, UberDocumentWrapper.class);
-
 			List<Object> content = new ArrayList<Object>();
 
 			for (UberData uberData : uber.getUber().getData()) {
 
-				if (uberData.getLabel() == null && uberData.getData() == null) {
-					continue;
-				}
+				if (!uberData.isLink()) {
 
-				if (findParentType(this.getContentType()).hasRawClass(Resource.class)) {
+					List<Link> resourceLinks = new ArrayList<Link>();
+					Resource<?> resource = null;
 
-					if (uberData.getData() == null) {
-						content.add(new Resource<Object>(uberData.getValue()));
-					} else {
-						List<Link> links = new ArrayList<Link>();
-						Resource<?> resource = null;
-						
-						for (UberData item : uberData.getData()) {
-							if (item.getRels() != null) {
-								for (String rel : item.getRels()) {
-									links.add(new Link(item.getUrl(), rel));
-								}
+					for (UberData item : uberData.getData()) {
+						if (item.isLink()) {
+							for (String rel : item.getRels()) {
+								resourceLinks.add(new Link(item.getUrl()).withRel(rel));
 							}
-							if (item.getLabel() != null) {
-								resource = new Resource<Object>(item.getValue());
-							}
-						}
-						if (resource != null) {
-							resource.add(links);
-							content.add(resource);
 						} else {
-							throw new RuntimeException("No content");
+							resource = new Resource<Object>(item.getValue());
 						}
 					}
 
-				} else {
-					content.add(uberData.getValue());
+					if (resource != null) {
+						resource.add(resourceLinks);
+						content.add(resource);
+					} else {
+						throw new RuntimeException("No content!");
+					}
 				}
 			}
 
-			return new Resources<Object>(content, uber.getUber().getLinks());
+
+
+			if (isResourcesOfResource(this.getContentType())) {
+				/*
+				 * Either return a Resources<Resource<T>>...
+				 */
+
+				return new Resources<Object>(content, uber.getUber().getLinks());
+			} else {
+				/*
+				 * ...or return a Resources<T>
+				 */
+
+				List<Object> resourceLessContent = new ArrayList<Object>();
+
+				for (Object item : content) {
+					Resource<?> resource = (Resource<?>) item;
+					resourceLessContent.add(resource.getContent());
+				}
+				
+				return new Resources<Object>(resourceLessContent, uber.getUber().getLinks());
+			}
 		}
 	}
 

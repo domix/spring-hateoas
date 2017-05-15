@@ -62,7 +62,7 @@ public enum UberAction {
 
 	@Override
 	public String toString() {
-		return this.getClass().getName().toLowerCase();
+		return this.name().toLowerCase();
 	}
 
 

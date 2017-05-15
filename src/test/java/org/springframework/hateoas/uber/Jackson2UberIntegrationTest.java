@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import org.springframework.core.io.ClassPathResource;
@@ -243,7 +242,6 @@ public class Jackson2UberIntegrationTest extends AbstractJackson2MarshallingInte
 		assertThat(actual, is(expected));
 	}
 
-	@Ignore
 	@Test
 	public void deserializeResourcesSimply() throws Exception {
 

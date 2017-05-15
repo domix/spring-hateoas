@@ -16,13 +16,21 @@
 package org.springframework.hateoas.uber;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import lombok.Builder;
 import lombok.Data;
 import lombok.Singular;
 
 import org.springframework.hateoas.Link;
+import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.ResourceSupport;
+import org.springframework.hateoas.Resources;
+import org.springframework.hateoas.UriTemplate;
+import org.springframework.hateoas.affordance.ActionDescriptor;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -88,6 +96,108 @@ public class UberData {
 	}
 
 	UberData() {
+	}
+
+	@JsonIgnore
+	public boolean isLink() {
+		return this.rels != null && !this.rels.isEmpty() && !StringUtils.isEmpty(this.url);
+	}
+
+	/**
+	 * Convert a {@link List} of {@link Link}s into an {@link UberData}.
+	 *
+	 * @param links
+	 * @return
+	 */
+	public static List<UberData> toUberData(List<Link> links) {
+
+		List<UberData> uberData = new ArrayList<UberData>();
+
+		for (Map.Entry<String, UberUtils.LinkAndRels> entry : UberUtils.urlRelMap(links).entrySet()) {
+			for (ActionDescriptor actionDescriptor : UberUtils.getActionDescriptors(entry.getValue().getLink())) {
+
+				uberData.add(uberData()
+					.rels(entry.getValue().getRels())
+					.url(new UriTemplate(entry.getKey()).expand(Collections.emptyMap()).asComponents().getBaseUri())
+					.action(UberAction.forRequestMethod(actionDescriptor.getHttpMethod()))
+					.model(UberUtils.getModelProperty(entry.getKey(), actionDescriptor))
+					.build());
+			}
+		}
+
+		return uberData;
+	}
+
+	/**
+	 * Convert a {@link ResourceSupport} into an {@link UberData}.
+	 *
+	 * @param resource
+	 * @return
+	 */
+	public static UberData toUberData(ResourceSupport resource) {
+
+		return uberData()
+			.data(toUberData(resource.getLinks()))
+			.build();
+	}
+
+	/**
+	 * Convert a {@link Resource} into an {@link UberData}.
+	 *
+	 * @param resource
+	 * @return
+	 */
+	public static UberData toUberData(Resource<?> resource) {
+
+		List<UberData> links = toUberData((ResourceSupport) resource).getData();
+
+		if (links != null) {
+			return uberData()
+				.data(links)
+				.oneData(uberData()
+					.label(Resource.class.getCanonicalName() + ".content")
+					.value(resource.getContent())
+					.build())
+				.build();
+
+		} else {
+			return uberData()
+				.oneData(uberData()
+					.label(Resource.class.getCanonicalName() + ".content")
+					.value(resource.getContent())
+					.build())
+				.build();
+		}
+		
+	}
+
+	public static UberData toUberData(Resources<?> resources) {
+
+		UberDataBuilder uberResourcesBuilder = uberData();
+
+		uberResourcesBuilder
+			.data(toUberData(resources.getLinks()));
+
+		for (Object item : resources.getContent()) {
+			if (item instanceof Resource) {
+				uberResourcesBuilder.oneData(toUberData((Resource<?>) item));
+			} else if (item instanceof ResourceSupport) {
+				uberResourcesBuilder.oneData(toUberData((ResourceSupport) item));
+			} else {
+				Resource<?> wrapper = new Resource<Object>(item);
+				uberResourcesBuilder.oneData(toUberData(wrapper));
+			}
+		}
+
+		return uberResourcesBuilder.build();
+	}
+
+	public static UberData toUberData(Object object) {
+
+		return uberData()
+			.label(object.getClass().getCanonicalName())
+			.value(object)
+			.build();
 	}
 
 	public UberAction getAction() {

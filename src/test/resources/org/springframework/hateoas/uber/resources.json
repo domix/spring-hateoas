@@ -5,11 +5,15 @@
       "rel" : [ "self" ],
       "url" : "localhost"
     }, {
-      "label" : "java.lang.String",
-      "value" : "first"
+      "data" : [ {
+        "label" : "org.springframework.hateoas.Resource.content",
+        "value" : "first"
+      } ]
     }, {
-      "label" : "java.lang.String",
-      "value" : "second"
+      "data" : [ {
+        "label" : "org.springframework.hateoas.Resource.content",
+        "value" : "second"
+      } ]
     } ]
   }
 }

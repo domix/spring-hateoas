@@ -16,8 +16,6 @@
 
 package org.springframework.hateoas.uber;
 
-import static org.springframework.hateoas.uber.UberData.*;
-
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
@@ -80,88 +78,6 @@ public final class UberUtils {
 		}
 
 		throw new IllegalArgumentException("Don't know how to handle type : " + object.getClass());
-	}
-
-	/**
-	 * Convert a {@link List} of {@link Link}s into an {@link UberData}.
-	 *
-	 * @param links
-	 * @return
-	 */
-	public static List<UberData> toUberData(List<Link> links) {
-
-		List<UberData> uberData = new ArrayList<UberData>();
-
-		for (Entry<String, LinkAndRels> entry : urlRelMap(links).entrySet()) {
-			for (ActionDescriptor actionDescriptor : UberUtils.getActionDescriptors(entry.getValue().link)) {
-
-				uberData.add(uberData()
-					.rels(entry.getValue().rels)
-					.url(new UriTemplate(entry.getKey()).expand(Collections.emptyMap()).asComponents().getBaseUri())
-					.action(UberAction.forRequestMethod(actionDescriptor.getHttpMethod()))
-					.model(getModelProperty(entry.getKey(), actionDescriptor))
-					.build());
-			}
-		}
-
-		return uberData;
-	}
-	/**
-	 * Convert a {@link ResourceSupport} into an {@link UberData}.
-	 *
-	 * @param resource
-	 * @return
-	 */
-	public static UberData toUberData(ResourceSupport resource) {
-
-		return uberData()
-			.data(toUberData(resource.getLinks()))
-			.build();
-	}
-
-	/**
-	 * Convert a {@link Resource} into an {@link UberData}.
-	 *
-	 * @param resource
-	 * @return
-	 */
-	public static UberData toUberData(Resource<?> resource) {
-
-		return uberData()
-			.data(toUberData((ResourceSupport) resource).getData())
-			.oneData(uberData()
-				.label(Resource.class.getCanonicalName() + ".content")
-				.value(resource.getContent())
-				.build())
-			.build();
-	}
-
-	public static UberData toUberData(Resources<?> resources) {
-
-		UberDataBuilder uberResourcesBuilder = uberData();
-
-		uberResourcesBuilder
-			.data(toUberData(resources.getLinks()));
-
-		for (Object item : resources.getContent()) {
-			if (item instanceof Resource) {
-				uberResourcesBuilder.oneData(toUberData((Resource<?>) item));
-			} else if (item instanceof ResourceSupport) {
-				uberResourcesBuilder.oneData(toUberData((ResourceSupport) item));
-			} else {
-				uberResourcesBuilder.oneData(toUberData(item));
-			}
-		}
-
-		return uberResourcesBuilder.build();
-	}
-
-	public static UberData toUberData(Object object) {
-
-		return uberData()
-			.label(object.getClass().getCanonicalName())
-			.value(object)
-			.build();
 	}
 
 	/**
@@ -309,7 +225,7 @@ public final class UberUtils {
 		return uberLink;
 	}
 
-	private static String getModelProperty(String href, ActionDescriptor actionDescriptor) {
+	static String getModelProperty(String href, ActionDescriptor actionDescriptor) {
 
 		UriTemplate uriTemplate = new UriTemplate(href);
 		String model;
@@ -396,7 +312,7 @@ public final class UberUtils {
 	 * 
 	 */
 	@Data
-	static class LinkAndRels {
+	public static class LinkAndRels {
 
 		 private Link link;
 		 private List<String> rels = new ArrayList<String>();

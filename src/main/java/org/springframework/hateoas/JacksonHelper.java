@@ -32,4 +32,27 @@ public final class JacksonHelper {
 			return contentType;
 		}
 	}
+
+	public static boolean isResources(JavaType type) {
+		return type.hasRawClass(Resources.class);
+	}
+
+	public static boolean isResource(JavaType type) {
+		return type.hasRawClass(Resource.class);
+	}
+
+	/**
+	 * Is this a {@literal Resources<Resource<?>>}?
+	 * 
+	 * @param type
+	 * @return
+	 */
+	public static boolean isResourcesOfResource(JavaType type) {
+
+		if (isResources(type) && isResource(type.containedType(0))) {
+			return true;
+		}
+
+		return false;
+	}
 }
