@@ -30,7 +30,6 @@ import org.springframework.hateoas.ResourceSupport;
 import org.springframework.hateoas.Resources;
 import org.springframework.hateoas.UriTemplate;
 import org.springframework.hateoas.affordance.ActionDescriptor;
-import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -96,11 +95,6 @@ public class UberData {
 	}
 
 	UberData() {
-	}
-
-	@JsonIgnore
-	public boolean isLink() {
-		return this.rels != null && !this.rels.isEmpty() && !StringUtils.isEmpty(this.url);
 	}
 
 	/**

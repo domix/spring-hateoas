@@ -18,7 +18,7 @@ package org.springframework.hateoas.uber;
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 import static org.springframework.hateoas.support.MappingUtils.*;
-import static org.springframework.hateoas.uber.NewUberDocument.*;
+import static org.springframework.hateoas.uber.UberContainer.*;
 import static org.springframework.hateoas.uber.UberConfiguration.*;
 import static org.springframework.hateoas.uber.UberData.*;
 
@@ -48,35 +48,35 @@ public class UberSerializationTest {
 	@Test
 	public void deserializingUberDocumentShouldWork() throws IOException {
 
-		NewUberDocument uberDocument = this.objectMapper.readValue(
-			read(new ClassPathResource("reference-1.json", getClass())), NewUberDocument.class);
+		UberDocument uberDocument = this.objectMapper.readValue(
+			read(new ClassPathResource("reference-1.json", getClass())), UberDocument.class);
 
-		assertThat(uberDocument.getLinks().size(), is(8));
+		assertThat(uberDocument.getUber().getLinks().size(), is(8));
 
-		assertThat(uberDocument.getLinks().get(0), is(new Link("http://example.org/", "self")));
-		assertThat(uberDocument.getLinks().get(1), is(new Link("http://example.org/list/", "collection")));
-		assertThat(uberDocument.getLinks().get(2), is(new Link("http://example.org/search{?title}", "search")));
-		assertThat(uberDocument.getLinks().get(3), is(new Link("http://example.org/search{?title}", "collection")));
-		assertThat(uberDocument.getLinks().get(4), is(new Link("http://example.org/list/1", "item")));
-		assertThat(uberDocument.getLinks().get(5), is(new Link("http://example.org/list/1", "http://example.org/rels/todo")));
-		assertThat(uberDocument.getLinks().get(6), is(new Link("http://example.org/list/2", "item")));
-		assertThat(uberDocument.getLinks().get(7), is(new Link("http://example.org/list/2", "http://example.org/rels/todo")));
+		assertThat(uberDocument.getUber().getLinks().get(0), is(new Link("http://example.org/", "self")));
+		assertThat(uberDocument.getUber().getLinks().get(1), is(new Link("http://example.org/list/", "collection")));
+		assertThat(uberDocument.getUber().getLinks().get(2), is(new Link("http://example.org/search{?title}", "search")));
+		assertThat(uberDocument.getUber().getLinks().get(3), is(new Link("http://example.org/search{?title}", "collection")));
+		assertThat(uberDocument.getUber().getLinks().get(4), is(new Link("http://example.org/list/1", "item")));
+		assertThat(uberDocument.getUber().getLinks().get(5), is(new Link("http://example.org/list/1", "http://example.org/rels/todo")));
+		assertThat(uberDocument.getUber().getLinks().get(6), is(new Link("http://example.org/list/2", "item")));
+		assertThat(uberDocument.getUber().getLinks().get(7), is(new Link("http://example.org/list/2", "http://example.org/rels/todo")));
 
-		assertThat(uberDocument.getData().size(), is(5));
+		assertThat(uberDocument.getUber().getData().size(), is(5));
 
-		assertThat(uberDocument.getData().get(0), is(uberData()
+		assertThat(uberDocument.getUber().getData().get(0), is(uberData()
 			.rel("self")
 			.url("http://example.org/")
 			.build()));
 
-		assertThat(uberDocument.getData().get(1), is(uberData()
+		assertThat(uberDocument.getUber().getData().get(1), is(uberData()
 			.name("list")
 			.label("ToDo List")
 			.rel("collection")
 			.url("http://example.org/list/")
 			.build()));
 
-		assertThat(uberDocument.getData().get(2), is(uberData()
+		assertThat(uberDocument.getUber().getData().get(2), is(uberData()
 			.name("search")
 			.label("Search")
 			.rel("search")
@@ -85,7 +85,7 @@ public class UberSerializationTest {
 			.templated(true)
 			.build()));
 
-		assertThat(uberDocument.getData().get(3), is(uberData()
+		assertThat(uberDocument.getUber().getData().get(3), is(uberData()
 			.name("todo")
 			.rel("item")
 			.rel("http://example.org/rels/todo")
@@ -102,7 +102,7 @@ public class UberSerializationTest {
 				.build())
 			.build()));
 
-		assertThat(uberDocument.getData().get(4), is(uberData()
+		assertThat(uberDocument.getUber().getData().get(4), is(uberData()
 			.name("todo")
 			.rel("item")
 			.rel("http://example.org/rels/todo")
@@ -123,7 +123,7 @@ public class UberSerializationTest {
 	@Test
 	public void serializingUberDocumentShouldWork() throws IOException {
 
-		NewUberDocument uberDocument = uberDocument()
+		UberContainer uberContainer = uberDocument()
 			.version("1.0")
 			.oneData(uberData()
 				.rel("self")
@@ -180,36 +180,36 @@ public class UberSerializationTest {
 			.build();
 
 
-		String actual = this.objectMapper.writeValueAsString(uberDocument);
+		String actual = this.objectMapper.writeValueAsString(new UberDocument(uberContainer));
 		assertThat(actual, is(read(new ClassPathResource("nicely-formatted-reference.json", getClass()))));
 	}
 
 	@Test
 	public void errorsShouldDeserializeProperly() throws IOException {
 
-		NewUberDocument uberDocument = this.objectMapper.readValue(
-			read(new ClassPathResource("reference-2.json", getClass())), NewUberDocument.class);
+		UberDocument uberDocument = this.objectMapper.readValue(
+			read(new ClassPathResource("reference-2.json", getClass())), UberDocument.class);
 
-		assertThat(uberDocument.getError(), is(notNullValue()));
+		assertThat(uberDocument.getUber().getError(), is(notNullValue()));
 
-		assertThat(uberDocument.getError().getData().size(), is(4));
+		assertThat(uberDocument.getUber().getError().getData().size(), is(4));
 
-		assertThat(uberDocument.getError().getData().get(0), is(uberData()
+		assertThat(uberDocument.getUber().getError().getData().get(0), is(uberData()
 			.name("type")
 			.rel("https://example.com/rels/http-problem#type")
 			.value("out-of-credit")
 			.build()));
-		assertThat(uberDocument.getError().getData().get(1), is(uberData()
+		assertThat(uberDocument.getUber().getError().getData().get(1), is(uberData()
 			.name("title")
 			.rel("https://example.com/rels/http-problem#title")
 			.value("You do not have enough credit")
 			.build()));
-		assertThat(uberDocument.getError().getData().get(2), is(uberData()
+		assertThat(uberDocument.getUber().getError().getData().get(2), is(uberData()
 			.name("detail")
 			.rel("https://example.com/rels/http-problem#detail")
 			.value("Your balance is 30, but the cost is 50.")
 			.build()));
-		assertThat(uberDocument.getError().getData().get(3), is(uberData()
+		assertThat(uberDocument.getUber().getError().getData().get(3), is(uberData()
 			.name("balance")
 			.rel("https://example.com/rels/http-problem#balance")
 			.value("30")
@@ -219,23 +219,23 @@ public class UberSerializationTest {
 	@Test
 	public void anotherSpecUberDocumentToTest() throws IOException {
 
-		NewUberDocument uberDocument = this.objectMapper.readValue(
-			read(new ClassPathResource("reference-3.json", getClass())), NewUberDocument.class);
+		UberDocument uberDocument = this.objectMapper.readValue(
+			read(new ClassPathResource("reference-3.json", getClass())), UberDocument.class);
 
-		assertThat(uberDocument.getLinks().size(), is(6));
-		assertThat(uberDocument.getLinks().get(0), is(new Link("http://example.org/", "self")));
-		assertThat(uberDocument.getLinks().get(1), is(new Link("http://example.org/profiles/people-and-places", "profile")));
-		assertThat(uberDocument.getLinks().get(2), is(new Link("http://example.org/people/", "collection")));
-		assertThat(uberDocument.getLinks().get(3), is(new Link("http://example.org/people/", "http://example.org/rels/people")));
-		assertThat(uberDocument.getLinks().get(4), is(new Link("http://example.org/places/", "collection")));
-		assertThat(uberDocument.getLinks().get(5), is(new Link("http://example.org/places/", "http://example.org/rels/places")));
+		assertThat(uberDocument.getUber().getLinks().size(), is(6));
+		assertThat(uberDocument.getUber().getLinks().get(0), is(new Link("http://example.org/", "self")));
+		assertThat(uberDocument.getUber().getLinks().get(1), is(new Link("http://example.org/profiles/people-and-places", "profile")));
+		assertThat(uberDocument.getUber().getLinks().get(2), is(new Link("http://example.org/people/", "collection")));
+		assertThat(uberDocument.getUber().getLinks().get(3), is(new Link("http://example.org/people/", "http://example.org/rels/people")));
+		assertThat(uberDocument.getUber().getLinks().get(4), is(new Link("http://example.org/places/", "collection")));
+		assertThat(uberDocument.getUber().getLinks().get(5), is(new Link("http://example.org/places/", "http://example.org/rels/places")));
 
-		assertThat(uberDocument.getData().get(2).getId(), is("people"));
-		assertThat(uberDocument.getData().get(2).getData().get(0).getAction(), is(UberAction.APPEND));
-		assertThat(uberDocument.getData().get(2).getData().get(2).getData().get(3).getName(), is("avatarUrl"));
-		assertThat(uberDocument.getData().get(2).getData().get(2).getData().get(3).isTransclude(), is(true));
-		assertThat(uberDocument.getData().get(2).getData().get(2).getData().get(3).getUrl(), is("http://example.org/avatars/1"));
-		assertThat(uberDocument.getData().get(2).getData().get(2).getData().get(3).getValue().toString(), is("User Photo"));
-		assertThat(uberDocument.getData().get(2).getData().get(2).getData().get(3).getAccepting(), hasItems("image/*"));
+		assertThat(uberDocument.getUber().getData().get(2).getId(), is("people"));
+		assertThat(uberDocument.getUber().getData().get(2).getData().get(0).getAction(), is(UberAction.APPEND));
+		assertThat(uberDocument.getUber().getData().get(2).getData().get(2).getData().get(3).getName(), is("avatarUrl"));
+		assertThat(uberDocument.getUber().getData().get(2).getData().get(2).getData().get(3).isTransclude(), is(true));
+		assertThat(uberDocument.getUber().getData().get(2).getData().get(2).getData().get(3).getUrl(), is("http://example.org/avatars/1"));
+		assertThat(uberDocument.getUber().getData().get(2).getData().get(2).getData().get(3).getValue().toString(), is("User Photo"));
+		assertThat(uberDocument.getUber().getData().get(2).getData().get(2).getData().get(3).getAccepting(), hasItems("image/*"));
 	}
 }

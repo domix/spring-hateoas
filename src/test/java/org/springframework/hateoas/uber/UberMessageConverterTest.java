@@ -20,7 +20,7 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.*;
-import static org.springframework.hateoas.uber.NewUberDocument.*;
+import static org.springframework.hateoas.uber.UberContainer.*;
 import static org.springframework.hateoas.uber.UberConfiguration.*;
 import static org.springframework.hateoas.uber.UberData.*;
 
@@ -61,8 +61,8 @@ public class UberMessageConverterTest {
 	public void verifyBasicAttributes() {
 
 		assertThat(this.messageConverter.getSupportedMediaTypes(), hasItems(MediaTypes.UBER_JSON));
-		assertThat(this.messageConverter.canRead(NewUberDocument.class, MediaTypes.UBER_JSON), is(true));
-		assertThat(this.messageConverter.canWrite(NewUberDocument.class, MediaTypes.UBER_JSON), is(true));
+		assertThat(this.messageConverter.canRead(UberContainer.class, MediaTypes.UBER_JSON), is(true));
+		assertThat(this.messageConverter.canWrite(UberContainer.class, MediaTypes.UBER_JSON), is(true));
 	}
 
 	@Test
@@ -80,38 +80,38 @@ public class UberMessageConverterTest {
 			}
 		};
 
-		Object convertedMessage = this.messageConverter.read(NewUberDocument.class, message);
+		Object convertedMessage = this.messageConverter.read(UberDocument.class, message);
 
-		assertThat(convertedMessage, instanceOf(NewUberDocument.class));
+		assertThat(convertedMessage, instanceOf(UberDocument.class));
 
-		NewUberDocument uberDocument = (NewUberDocument) convertedMessage;
+		UberDocument uberDocument = (UberDocument) convertedMessage;
 
-		assertThat(uberDocument.getLinks().size(), is(8));
+		assertThat(uberDocument.getUber().getLinks().size(), is(8));
 
-		assertThat(uberDocument.getLinks().get(0), is(new Link("http://example.org/", "self")));
-		assertThat(uberDocument.getLinks().get(1), is(new Link("http://example.org/list/", "collection")));
-		assertThat(uberDocument.getLinks().get(2), is(new Link("http://example.org/search{?title}", "search")));
-		assertThat(uberDocument.getLinks().get(3), is(new Link("http://example.org/search{?title}", "collection")));
-		assertThat(uberDocument.getLinks().get(4), is(new Link("http://example.org/list/1", "item")));
-		assertThat(uberDocument.getLinks().get(5), is(new Link("http://example.org/list/1", "http://example.org/rels/todo")));
-		assertThat(uberDocument.getLinks().get(6), is(new Link("http://example.org/list/2", "item")));
-		assertThat(uberDocument.getLinks().get(7), is(new Link("http://example.org/list/2", "http://example.org/rels/todo")));
+		assertThat(uberDocument.getUber().getLinks().get(0), is(new Link("http://example.org/", "self")));
+		assertThat(uberDocument.getUber().getLinks().get(1), is(new Link("http://example.org/list/", "collection")));
+		assertThat(uberDocument.getUber().getLinks().get(2), is(new Link("http://example.org/search{?title}", "search")));
+		assertThat(uberDocument.getUber().getLinks().get(3), is(new Link("http://example.org/search{?title}", "collection")));
+		assertThat(uberDocument.getUber().getLinks().get(4), is(new Link("http://example.org/list/1", "item")));
+		assertThat(uberDocument.getUber().getLinks().get(5), is(new Link("http://example.org/list/1", "http://example.org/rels/todo")));
+		assertThat(uberDocument.getUber().getLinks().get(6), is(new Link("http://example.org/list/2", "item")));
+		assertThat(uberDocument.getUber().getLinks().get(7), is(new Link("http://example.org/list/2", "http://example.org/rels/todo")));
 
-		assertThat(uberDocument.getData().size(), is(5));
+		assertThat(uberDocument.getUber().getData().size(), is(5));
 
-		assertThat(uberDocument.getData().get(0), is(uberData()
+		assertThat(uberDocument.getUber().getData().get(0), is(uberData()
 			.rel("self")
 			.url("http://example.org/")
 			.build()));
 
-		assertThat(uberDocument.getData().get(1), is(uberData()
+		assertThat(uberDocument.getUber().getData().get(1), is(uberData()
 			.name("list")
 			.label("ToDo List")
 			.rel("collection")
 			.url("http://example.org/list/")
 			.build()));
 
-		assertThat(uberDocument.getData().get(2), is(uberData()
+		assertThat(uberDocument.getUber().getData().get(2), is(uberData()
 			.name("search")
 			.label("Search")
 			.rel("search")
@@ -120,7 +120,7 @@ public class UberMessageConverterTest {
 			.templated(true)
 			.build()));
 
-		assertThat(uberDocument.getData().get(3), is(uberData()
+		assertThat(uberDocument.getUber().getData().get(3), is(uberData()
 			.name("todo")
 			.rel("item")
 			.rel("http://example.org/rels/todo")
@@ -137,7 +137,7 @@ public class UberMessageConverterTest {
 				.build())
 			.build()));
 
-		assertThat(uberDocument.getData().get(4), is(uberData()
+		assertThat(uberDocument.getUber().getData().get(4), is(uberData()
 			.name("todo")
 			.rel("item")
 			.rel("http://example.org/rels/todo")
@@ -158,7 +158,7 @@ public class UberMessageConverterTest {
 	@Test
 	public void canWriteAnUberDocumentMessage() throws IOException {
 
-		NewUberDocument uberDocument = uberDocument()
+		UberContainer uberContainer = uberDocument()
 			.version("1.0")
 			.oneData(uberData()
 				.rel("self")
@@ -226,11 +226,13 @@ public class UberMessageConverterTest {
 			}
 		};
 
-		this.messageConverter.write(uberDocument, MediaTypes.UBER_JSON, convertedMessage);
+		UberDocument wrapper = new UberDocument(uberContainer);
 
-		NewUberDocument copy = this.mapper.readValue(stream.toString(), NewUberDocument.class);
+		this.messageConverter.write(wrapper, MediaTypes.UBER_JSON, convertedMessage);
 
-		assertThat(copy, is(uberDocument));
+		UberDocument copy = this.mapper.readValue(stream.toString(), UberDocument.class);
+
+		assertThat(copy, is(wrapper));
 
 	}
 }

@@ -19,32 +19,22 @@ package org.springframework.hateoas.uber;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import lombok.Data;
 
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.Resource;
-import org.springframework.hateoas.ResourceSupport;
-import org.springframework.hateoas.Resources;
 import org.springframework.hateoas.UriTemplate;
-import org.springframework.hateoas.UriTemplateComponents;
 import org.springframework.hateoas.affordance.ActionDescriptor;
 import org.springframework.hateoas.affordance.Affordance;
 import org.springframework.hateoas.affordance.springmvc.SpringActionDescriptor;
-import org.springframework.hateoas.affordance.support.DataTypeUtils;
 import org.springframework.http.HttpMethod;
-import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,20 +45,20 @@ public final class UberUtils {
 	static final Set<String> FILTER_BEAN = new HashSet<String>(Arrays.asList("class"));
 
 	/**
-	 * Transform an object into a {@link NewUberDocument}.
+	 * Transform an object into a {@link UberContainer}.
 	 * 
 	 * @param object
 	 * @param objectMapper
 	 * @return
 	 */
-	public static NewUberDocument toUber(final Object object, final ObjectMapper objectMapper) {
+	public static UberDocument toUber(final Object object, final ObjectMapper objectMapper) {
 
 		if (object == null) {
 			return null;
 		}
 
-		if (object instanceof NewUberDocument) {
-			return (NewUberDocument) object;
+		if (object instanceof UberDocument) {
+			return (UberDocument) object;
 		}
 
 		if (object instanceof Iterable) {
@@ -80,149 +70,12 @@ public final class UberUtils {
 		throw new IllegalArgumentException("Don't know how to handle type : " + object.getClass());
 	}
 
-	/**
-	 * Recursively converts object to nodes of uber data.
-	 *
-	 * @param objectNode to append to
-	 * @param object to convert
-	 */
-	public static void toUberData(AbstractUberNode objectNode, Object object) {
-		Set<String> filtered = FILTER_RESOURCE_SUPPORT;
-		if (object == null) {
-			return;
-		}
-		try {
-			// TODO: move all returns to else branch of property descriptor handling
-			if (object instanceof Resource) {
-				Resource<?> resource = (Resource<?>) object;
-				objectNode.addLinks(resource.getLinks());
-				toUberData(objectNode, resource.getContent());
-				return;
-			} else if (object instanceof Resources) {
-				Resources<?> resources = (Resources<?>) object;
-
-				// TODO set name using EVO see HypermediaSupportBeanDefinitionRegistrar
-
-				objectNode.addLinks(resources.getLinks());
-
-				Collection<?> content = resources.getContent();
-				toUberData(objectNode, content);
-				return;
-			} else if (object instanceof ResourceSupport) {
-				ResourceSupport resource = (ResourceSupport) object;
-
-				objectNode.addLinks(resource.getLinks());
-
-				// wrap object attributes below to avoid endless loop
-
-			} else if (object instanceof Collection) {
-				Collection<?> collection = (Collection<?>) object;
-				for (Object item : collection) {
-					// TODO name must be repeated for each collection item
-					UberNode itemNode = new UberNode();
-					objectNode.addData(itemNode);
-					toUberData(itemNode, item);
-
-					// toUberData(objectNode, item);
-				}
-				return;
-			}
-			if (object instanceof Map) {
-				Map<?, ?> map = (Map<?, ?>) object;
-				for (Entry<?, ?> entry : map.entrySet()) {
-					String key = entry.getKey().toString();
-					Object content = entry.getValue();
-					Object value = getContentAsScalarValue(content);
-					UberNode entryNode = new UberNode();
-					objectNode.addData(entryNode);
-					entryNode.setName(key);
-					if (value != null) {
-						entryNode.setValue(value);
-					} else {
-						toUberData(entryNode, content);
-					}
-				}
-			} else {
-				PropertyDescriptor[] propertyDescriptors = getPropertyDescriptors(object);// BeanUtils
-				// .getPropertyDescriptors(bean.getClass());
-				for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
-					String name = propertyDescriptor.getName();
-					if (filtered.contains(name)) {
-						continue;
-					}
-					UberNode propertyNode = new UberNode();
-					Method readMethod = propertyDescriptor.getReadMethod();
-					readMethod.setAccessible(true);
-					Object content = readMethod.invoke(object);
-
-					Object value = getContentAsScalarValue(content);
-					propertyNode.setName(name);
-					objectNode.addData(propertyNode);
-					if (value != null) {
-						// for each scalar property of a simple bean, add valuepair nodes to data
-						propertyNode.setValue(value);
-					} else {
-						toUberData(propertyNode, content);
-					}
-				}
-			}
-		} catch (Exception ex) {
-			throw new RuntimeException("failed to transform object " + object, ex);
-		}
-	}
-
 	private static PropertyDescriptor[] getPropertyDescriptors(Object bean) {
 		try {
 			return Introspector.getBeanInfo(bean.getClass()).getPropertyDescriptors();
 		} catch (IntrospectionException e) {
 			throw new RuntimeException("failed to get property descriptors of bean " + bean, e);
 		}
-	}
-
-	private static Object getContentAsScalarValue(Object content) {
-		final Object value;
-		if (content == null) {
-			value = UberNode.NULL_VALUE;
-		} else if (DataTypeUtils.isSingleValueType(content.getClass())) {
-			value = content.toString();
-		} else {
-			value = null;
-		}
-		return value;
-	}
-
-	/**
-	 * Converts single link to uber node.
-	 *
-	 * @param href to use
-	 * @param actionDescriptor to use for action and model, never null
-	 * @param rels of the link
-	 * @return uber link
-	 */
-	public static UberNode toUberLink(String href, ActionDescriptor actionDescriptor, String... rels) {
-		return toUberLink(href, actionDescriptor, Arrays.asList(rels));
-	}
-
-	/**
-	 * Converts single link to uber node.
-	 *
-	 * @param href to use
-	 * @param actionDescriptor to use for action and model, never null
-	 * @param rels of the link
-	 * @return uber link
-	 */
-	public static UberNode toUberLink(String href, ActionDescriptor actionDescriptor, List<String> rels) {
-		Assert.notNull(actionDescriptor, "actionDescriptor must not be null");
-		UberNode uberLink = new UberNode();
-		uberLink.setRel(rels);
-		UriTemplateComponents partialUriTemplateComponents = new UriTemplate(href)
-				.expand(Collections.<String, Object>emptyMap()).asComponents();
-		uberLink.setUrl(partialUriTemplateComponents.getBaseUri());
-		uberLink.setModel(getModelProperty(href, actionDescriptor));
-		if (actionDescriptor != null) {
-			uberLink.setAction(UberAction.forRequestMethod(actionDescriptor.getHttpMethod()));
-		}
-		return uberLink;
 	}
 
 	static String getModelProperty(String href, ActionDescriptor actionDescriptor) {
@@ -249,13 +102,12 @@ public final class UberUtils {
 	}
 
 	public static List<ActionDescriptor> getActionDescriptors(Link link) {
-		List<ActionDescriptor> actionDescriptors;
+
 		if (link instanceof Affordance) {
-			actionDescriptors = ((Affordance) link).getActionDescriptors();
+			return ((Affordance) link).getActionDescriptors();
 		} else {
-			actionDescriptors = Arrays.asList((ActionDescriptor) new SpringActionDescriptor("get", HttpMethod.GET));
+			return Arrays.asList((ActionDescriptor) new SpringActionDescriptor("get", HttpMethod.GET));
 		}
-		return actionDescriptors;
 	}
 
 	public static List<String> getRels(Link link) {

@@ -50,7 +50,7 @@ public class UberLinkDiscoverer implements LinkDiscoverer {
 	public Link findLinkWithRel(String rel, String representation) {
 
 		try {
-			NewUberDocument uberDocument = this.objectMapper.readValue(representation, NewUberDocument.class);
+			UberDocument uberDocument = this.objectMapper.readValue(representation, UberDocument.class);
 
 			return extractLink(rel, uberDocument);
 		} catch (IOException e) {
@@ -69,7 +69,7 @@ public class UberLinkDiscoverer implements LinkDiscoverer {
 	public Link findLinkWithRel(String rel, InputStream representation) {
 
 		try {
-			NewUberDocument uberDocument = this.objectMapper.readValue(representation, NewUberDocument.class);
+			UberDocument uberDocument = this.objectMapper.readValue(representation, UberDocument.class);
 
 			return extractLink(rel, uberDocument);
 		} catch (IOException e) {
@@ -88,7 +88,7 @@ public class UberLinkDiscoverer implements LinkDiscoverer {
 	public List<Link> findLinksWithRel(String rel, String representation) {
 
 		try {
-			NewUberDocument uberDocument = this.objectMapper.readValue(representation, NewUberDocument.class);
+			UberDocument uberDocument = this.objectMapper.readValue(representation, UberDocument.class);
 
 			return extractLinks(rel, uberDocument);
 		} catch (IOException e) {
@@ -107,7 +107,7 @@ public class UberLinkDiscoverer implements LinkDiscoverer {
 	public List<Link> findLinksWithRel(String rel, InputStream representation) {
 
 		try {
-			NewUberDocument uberDocument = this.objectMapper.readValue(representation, NewUberDocument.class);
+			UberDocument uberDocument = this.objectMapper.readValue(representation, UberDocument.class);
 
 			return extractLinks(rel, uberDocument);
 		} catch (IOException e) {
@@ -127,9 +127,9 @@ public class UberLinkDiscoverer implements LinkDiscoverer {
 	 * @param uberDocument
 	 * @return
 	 */
-	private Link extractLink(String rel, NewUberDocument uberDocument) {
+	private Link extractLink(String rel, UberDocument uberDocument) {
 
-		for (Link link : uberDocument.getLinks()) {
+		for (Link link : uberDocument.getUber().getLinks()) {
 			if (link.getRel().equals(rel)) {
 				return link;
 			}
@@ -137,11 +137,11 @@ public class UberLinkDiscoverer implements LinkDiscoverer {
 		return null;
 	}
 
-	private List<Link> extractLinks(String rel, NewUberDocument uberDocument) {
+	private List<Link> extractLinks(String rel, UberDocument uberDocument) {
 
 		List<Link> links = new ArrayList<Link>();
 
-		for (Link link : uberDocument.getLinks()) {
+		for (Link link : uberDocument.getUber().getLinks()) {
 			if (link.getRel().equals(rel)) {
 				links.add(link);
 			}

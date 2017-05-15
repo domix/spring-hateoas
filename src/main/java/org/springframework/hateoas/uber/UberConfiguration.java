@@ -21,7 +21,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -41,16 +40,13 @@ public class UberConfiguration extends WebMvcConfigurerAdapter {
 	}
 
 	/**
-	 * Configure the {@link ObjectMapper} to support {@link NewUberDocument}.
+	 * Configure the {@link ObjectMapper} to support {@link UberContainer}.
 	 * 
 	 * @param objectMapper
 	 */
 	public static ObjectMapper configureUberObjectMapper(ObjectMapper objectMapper) {
 
 		objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-		objectMapper.enable(SerializationFeature.WRAP_ROOT_VALUE);
-		objectMapper.enable(DeserializationFeature.UNWRAP_ROOT_VALUE);
-
 		return objectMapper;
 	}
 }

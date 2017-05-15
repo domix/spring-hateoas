@@ -27,17 +27,15 @@ import org.springframework.hateoas.Link;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.annotation.JsonRootName;
 
 /**
  * @author Greg Turnquist
  */
 @Data
 @Builder(builderMethodName = "uberDocument")
-@JsonRootName("uber")
 @JsonPropertyOrder({"version", "data", "error"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class NewUberDocument {
+public class UberContainer {
 
 	private String version;
 
@@ -46,18 +44,18 @@ public class NewUberDocument {
 
 	private UberError error;
 
-	public NewUberDocument(Object toWrap) {
+	public UberContainer(Object toWrap) {
 
 	}
 
-	NewUberDocument(String version, List<UberData> data, UberError error) {
+	UberContainer(String version, List<UberData> data, UberError error) {
 
 		this.version = version;
 		this.data = data;
 		this.error = error;
 	}
 
-	NewUberDocument() {
+	UberContainer() {
 	}
 
 	/**

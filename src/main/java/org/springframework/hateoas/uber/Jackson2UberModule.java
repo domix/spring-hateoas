@@ -16,7 +16,7 @@
 package org.springframework.hateoas.uber;
 
 import static org.springframework.hateoas.JacksonHelper.*;
-import static org.springframework.hateoas.uber.NewUberDocument.*;
+import static org.springframework.hateoas.uber.UberContainer.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -79,13 +79,13 @@ public class Jackson2UberModule extends SimpleModule {
 		@Override
 		public void serialize(ResourceSupport value, JsonGenerator gen, SerializerProvider provider) throws IOException {
 
-			UberDocumentWrapper uber = new UberDocumentWrapper(uberDocument()
+			UberDocument uber = new UberDocument(uberDocument()
 				.version("1.0")
 				.data(UberData.toUberData(value).getData())
 				.build());
 
 			provider
-				.findValueSerializer(UberDocumentWrapper.class, property)
+				.findValueSerializer(UberDocument.class, property)
 				.serialize(uber, gen, provider);
 		}
 
@@ -179,13 +179,13 @@ public class Jackson2UberModule extends SimpleModule {
 		@Override
 		public void serialize(Resource<?> value, JsonGenerator gen, SerializerProvider provider) throws IOException {
 
-			UberDocumentWrapper uber = new UberDocumentWrapper(uberDocument()
+			UberDocument uber = new UberDocument(uberDocument()
 				.version("1.0")
 				.data(UberData.toUberData(value).getData())
 				.build());
 
 			provider
-				.findValueSerializer(UberDocumentWrapper.class, property)
+				.findValueSerializer(UberDocument.class, property)
 				.serialize(uber, gen, provider);
 		}
 
@@ -279,13 +279,13 @@ public class Jackson2UberModule extends SimpleModule {
 		@Override
 		public void serialize(Resources<?> value, JsonGenerator gen, SerializerProvider provider) throws IOException {
 
-			UberDocumentWrapper uber = new UberDocumentWrapper(uberDocument()
+			UberDocument uber = new UberDocument(uberDocument()
 				.version("1.0")
 				.data(UberData.toUberData(value).getData())
 				.build());
 
 			provider
-				.findValueSerializer(UberDocumentWrapper.class, property)
+				.findValueSerializer(UberDocument.class, property)
 				.serialize(uber, gen, provider);
 		}
 
@@ -373,7 +373,7 @@ public class Jackson2UberModule extends SimpleModule {
 		}
 
 		UberResourceSupportDeserializer() {
-			this(TypeFactory.defaultInstance().constructSimpleType(UberDocumentWrapper.class, new JavaType[0]));
+			this(TypeFactory.defaultInstance().constructSimpleType(UberDocument.class, new JavaType[0]));
 		}
 		
 
@@ -427,7 +427,7 @@ public class Jackson2UberModule extends SimpleModule {
 		@Override
 		public ResourceSupport deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
 
-			UberDocumentWrapper uber = p.getCodec().readValue(p, UberDocumentWrapper.class);
+			UberDocument uber = p.getCodec().readValue(p, UberDocument.class);
 
 			ResourceSupport resourceSupport = new ResourceSupport();
 
@@ -494,7 +494,7 @@ public class Jackson2UberModule extends SimpleModule {
 		}
 
 		UberResourceDeserializer() {
-			this(TypeFactory.defaultInstance().constructSimpleType(UberDocumentWrapper.class, new JavaType[0]));
+			this(TypeFactory.defaultInstance().constructSimpleType(UberDocument.class, new JavaType[0]));
 		}
 
 		/**
@@ -547,7 +547,7 @@ public class Jackson2UberModule extends SimpleModule {
 		@Override
 		public Resource<?> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
 
-			UberDocumentWrapper uber = p.getCodec().readValue(p, UberDocumentWrapper.class);
+			UberDocument uber = p.getCodec().readValue(p, UberDocument.class);
 
 			for (UberData uberData : uber.getUber().getData()) {
 				if (uberData.getLabel() != null && uberData.getLabel().equals(Resource.class.getCanonicalName() + ".content")) {
@@ -615,7 +615,7 @@ public class Jackson2UberModule extends SimpleModule {
 		}
 
 		UberResourcesDeserializer() {
-			this(TypeFactory.defaultInstance().constructSimpleType(UberDocumentWrapper.class, new JavaType[0]));
+			this(TypeFactory.defaultInstance().constructSimpleType(UberDocument.class, new JavaType[0]));
 		}
 		
 		/**
@@ -714,18 +714,18 @@ public class Jackson2UberModule extends SimpleModule {
 		@Override
 		public Resources<?> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
 
-			UberDocumentWrapper uber = p.getCodec().readValue(p, UberDocumentWrapper.class);
+			UberDocument uber = p.getCodec().readValue(p, UberDocument.class);
 			List<Object> content = new ArrayList<Object>();
 
 			for (UberData uberData : uber.getUber().getData()) {
 
-				if (!uberData.isLink()) {
+				if (!uberData.hasLinks()) {
 
 					List<Link> resourceLinks = new ArrayList<Link>();
 					Resource<?> resource = null;
 
 					for (UberData item : uberData.getData()) {
-						if (item.isLink()) {
+						if (item.hasLinks()) {
 							for (String rel : item.getRels()) {
 								resourceLinks.add(new Link(item.getUrl()).withRel(rel));
 							}

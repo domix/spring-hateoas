@@ -20,13 +20,15 @@ import lombok.Data;
 import lombok.Value;
 
 /**
+ * Wrap Uber documents with a top level {@literal uber} element.
+ * 
  * @author Greg Turnquist
  */
 @Data
 @Value
 @AllArgsConstructor
-public class UberDocumentWrapper {
+public class UberDocument {
 
-	private final NewUberDocument uber;
+	private final UberContainer uber;
 
 }
