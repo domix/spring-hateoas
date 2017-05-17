@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -259,5 +261,22 @@ public class Jackson2UberIntegrationTest extends AbstractJackson2MarshallingInte
 		assertThat(actual, is(expected));
 	}
 
+	@Test
+	public void serializeWrappedSimplePojo() throws Exception {
+
+		Employee employee = new Employee("Frodo", "ring bearer");
+		Resource<Employee> expected = new Resource<Employee>(employee, new Link("/employees/1").withSelfRel());
+
+		String actual = MappingUtils.read(new ClassPathResource("resource-with-simple-pojo.json", getClass()));
+
+		assertThat(write(expected), is(actual));
+	}
+
+	@Data
+	@AllArgsConstructor
+	static class Employee {
+		private String name;
+		private String role;
+	}
 
 }
