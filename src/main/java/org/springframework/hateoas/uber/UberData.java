@@ -35,6 +35,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author Greg Turnquist
@@ -139,33 +141,37 @@ public class UberData {
 	 * Convert a {@link Resource} into an {@link UberData}.
 	 *
 	 * @param resource
+	 * @param mapper
 	 * @return
 	 */
-	public static UberData toUberData(Resource<?> resource) {
+	public static UberData toUberData(Resource<?> resource, ObjectMapper mapper) {
 
-		List<UberData> links = toUberData((ResourceSupport) resource).getData();
+		List<UberData> links = toUberData(resource).getData();
 
-		if (links != null) {
-			return uberData()
-				.data(links)
-				.oneData(uberData()
-					.label(Resource.class.getCanonicalName() + ".content")
-					.value(resource.getContent())
-					.build())
-				.build();
+		try {
+			if (links != null) {
+				return uberData()
+					.data(links)
+					.oneData(uberData()
+						.label(resource.getContent().getClass().getName())
+						.value(mapper.writeValueAsString(resource.getContent()))
+						.build())
+					.build();
 
-		} else {
-			return uberData()
-				.oneData(uberData()
-					.label(Resource.class.getCanonicalName() + ".content")
-					.value(resource.getContent())
-					.build())
-				.build();
+			} else {
+				return uberData()
+					.oneData(uberData()
+						.label(resource.getContent().getClass().getName())
+						.value(mapper.writeValueAsString(resource.getContent()))
+						.build())
+					.build();
+			}
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
 		}
-		
 	}
 
-	public static UberData toUberData(Resources<?> resources) {
+	public static UberData toUberData(Resources<?> resources, ObjectMapper mapper) {
 
 		UberDataBuilder uberResourcesBuilder = uberData();
 
@@ -174,12 +180,12 @@ public class UberData {
 
 		for (Object item : resources.getContent()) {
 			if (item instanceof Resource) {
-				uberResourcesBuilder.oneData(toUberData((Resource<?>) item));
+				uberResourcesBuilder.oneData(toUberData((Resource<?>) item, mapper));
 			} else if (item instanceof ResourceSupport) {
 				uberResourcesBuilder.oneData(toUberData((ResourceSupport) item));
 			} else {
 				Resource<?> wrapper = new Resource<Object>(item);
-				uberResourcesBuilder.oneData(toUberData(wrapper));
+				uberResourcesBuilder.oneData(toUberData(wrapper, mapper));
 			}
 		}
 

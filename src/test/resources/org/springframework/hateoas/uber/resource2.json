@@ -5,8 +5,8 @@
       "rel" : [ "custom" ],
       "url" : "localhost"
     }, {
-      "label" : "org.springframework.hateoas.Resource.content",
-      "value" : "second"
+      "label" : "java.lang.String",
+      "value" : "\"second\""
     } ]
   }
 }

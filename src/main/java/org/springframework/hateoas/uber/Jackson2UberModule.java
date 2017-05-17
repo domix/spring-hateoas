@@ -29,6 +29,7 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.ResourceSupport;
 import org.springframework.hateoas.Resources;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -179,9 +180,11 @@ public class Jackson2UberModule extends SimpleModule {
 		@Override
 		public void serialize(Resource<?> value, JsonGenerator gen, SerializerProvider provider) throws IOException {
 
+			ObjectMapper mapper = (ObjectMapper) gen.getCodec();
+
 			UberDocument uber = new UberDocument(uberDocument()
 				.version("1.0")
-				.data(UberData.toUberData(value).getData())
+				.data(UberData.toUberData(value, mapper).getData())
 				.build());
 
 			provider
@@ -279,9 +282,11 @@ public class Jackson2UberModule extends SimpleModule {
 		@Override
 		public void serialize(Resources<?> value, JsonGenerator gen, SerializerProvider provider) throws IOException {
 
+			ObjectMapper mapper = (ObjectMapper) gen.getCodec();
+
 			UberDocument uber = new UberDocument(uberDocument()
 				.version("1.0")
-				.data(UberData.toUberData(value).getData())
+				.data(UberData.toUberData(value, mapper).getData())
 				.build());
 
 			provider
@@ -545,13 +550,23 @@ public class Jackson2UberModule extends SimpleModule {
 		 * @return Deserialized value
 		 */
 		@Override
-		public Resource<?> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+		public Resource<?> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
 
 			UberDocument uber = p.getCodec().readValue(p, UberDocument.class);
 
+			ObjectMapper mapper = (ObjectMapper) p.getCodec();
+
 			for (UberData uberData : uber.getUber().getData()) {
-				if (uberData.getLabel() != null && uberData.getLabel().equals(Resource.class.getCanonicalName() + ".content")) {
-					return new Resource<Object>(uberData.getValue(), uber.getUber().getLinks());
+				if (!StringUtils.isEmpty(uberData.getLabel())) {
+					Object value = uberData.getValue();
+
+					try {
+						value = mapper.readValue(value.toString(), Class.forName(uberData.getLabel()));
+					} catch (ClassNotFoundException e) {
+						throw new RuntimeException(e);
+					}
+
+					return new Resource<Object>(value, uber.getUber().getLinks());
 				}
 			}
 			throw new IllegalStateException("No data entry containing a 'value' was found in this document!");
@@ -715,6 +730,9 @@ public class Jackson2UberModule extends SimpleModule {
 		public Resources<?> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
 
 			UberDocument uber = p.getCodec().readValue(p, UberDocument.class);
+
+			ObjectMapper mapper = (ObjectMapper) p.getCodec();
+
 			List<Object> content = new ArrayList<Object>();
 
 			for (UberData uberData : uber.getUber().getData()) {
@@ -730,7 +748,12 @@ public class Jackson2UberModule extends SimpleModule {
 								resourceLinks.add(new Link(item.getUrl()).withRel(rel));
 							}
 						} else {
-							resource = new Resource<Object>(item.getValue());
+							try {
+								Object value = mapper.readValue(item.getValue().toString(), Class.forName(item.getLabel()));
+								resource = new Resource<Object>(value);
+							} catch (ClassNotFoundException e) {
+								throw new RuntimeException(e);
+							}
 						}
 					}
 

@@ -5,11 +5,8 @@
       "rel" : [ "self" ],
       "url" : "/employees/1"
     }, {
-      "label" : "org.springframework.hateoas.Resource.content",
-      "value" : {
-        "name" : "Frodo",
-        "role" : "ring bearer"
-      }
+      "label" : "org.springframework.hateoas.uber.Jackson2UberIntegrationTest$Employee",
+      "value" : "{\n  \"name\" : \"Frodo\",\n  \"role\" : \"ring bearer\"\n}"
     } ]
   }
 }

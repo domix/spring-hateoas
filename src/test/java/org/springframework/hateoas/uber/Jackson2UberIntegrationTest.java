@@ -272,6 +272,18 @@ public class Jackson2UberIntegrationTest extends AbstractJackson2MarshallingInte
 		assertThat(write(expected), is(actual));
 	}
 
+	@Test
+	public void deserializeWrappedSimplePojo() throws IOException {
+
+		Employee employee = new Employee("Frodo", "ring bearer");
+		Resource<Employee> expected = new Resource<Employee>(employee, new Link("/employees/1").withSelfRel());
+
+		Resource<Employee> actual = mapper.readValue(MappingUtils.read(new ClassPathResource("resource-with-simple-pojo.json", getClass())),
+			mapper.getTypeFactory().constructParametricType(Resource.class, Employee.class));
+
+		assertThat(actual, is(expected));
+	}
+
 	@Data
 	@AllArgsConstructor
 	static class Employee {

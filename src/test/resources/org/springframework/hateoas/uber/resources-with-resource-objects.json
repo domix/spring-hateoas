@@ -15,8 +15,8 @@
         "rel" : [ "orders" ],
         "url" : "orders"
       }, {
-        "label" : "org.springframework.hateoas.Resource.content",
-        "value" : "first"
+        "label" : "java.lang.String",
+        "value" : "\"first\""
       } ]
     }, {
       "data" : [ {
@@ -26,8 +26,8 @@
         "rel" : [ "orders" ],
         "url" : "order"
       }, {
-        "label" : "org.springframework.hateoas.Resource.content",
-        "value" : "second"
+        "label" : "java.lang.String",
+        "value" : "\"second\""
       } ]
     } ]
   }

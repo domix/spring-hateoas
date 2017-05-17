@@ -11,8 +11,8 @@
       "rel" : [ "third" ],
       "url" : "third"
     }, {
-      "label" : "org.springframework.hateoas.Resource.content",
-      "value" : "third"
+      "label" : "java.lang.String",
+      "value" : "\"third\""
     } ]
   }
 }
